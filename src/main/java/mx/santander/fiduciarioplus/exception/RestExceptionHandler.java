@@ -1,20 +1,25 @@
-package mx.santander.fiduciarioplus.lib.exception;
+package mx.santander.fiduciarioplus.exception;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MissingRequestValueException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import mx.santander.fiduciarioplus.lib.exception.catalog.BusinessCatalog;
-import mx.santander.fiduciarioplus.lib.exception.catalog.GeneralCatalog;
-import mx.santander.fiduciarioplus.lib.exception.model.BusinessException;
-import mx.santander.fiduciarioplus.lib.exception.model.InvalidDataException;
-import mx.santander.fiduciarioplus.lib.exception.model.ModelException;
-import mx.santander.fiduciarioplus.lib.exception.model.PersistenDataException;
+import mx.santander.fiduciarioplus.exception.catalog.BusinessCatalog;
+import mx.santander.fiduciarioplus.exception.catalog.GeneralCatalog;
+import mx.santander.fiduciarioplus.exception.model.BusinessException;
+import mx.santander.fiduciarioplus.exception.model.GeneralException;
+import mx.santander.fiduciarioplus.exception.model.InvalidDataException;
+import mx.santander.fiduciarioplus.exception.model.ModelException;
+import mx.santander.fiduciarioplus.exception.model.PersistenDataException;
 
 
 @ControllerAdvice
@@ -26,7 +31,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	 * @param request Informacion del request enviado
 	 * @return Respuesta basada en el catalogo de excepciones
 	 */
-	@ExceptionHandler({BusinessException.class, InvalidDataException.class, PersistenDataException.class})
+	@ExceptionHandler({BusinessException.class, InvalidDataException.class, PersistenDataException.class, GeneralException.class})
 	public ResponseEntity<?> handlerRestException (ModelException ex, HttpServletRequest request){
 		ErrorResponse errorResponse = new ErrorResponse(ex.getCode(), 
 				ex.getMessage(), 
@@ -57,12 +62,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	 * @param request Informacion del request enviado
 	 * @return Respuesta basada en el catalogo de excepciones
 	 */
-	@ExceptionHandler({MissingRequestValueException.class})
-	protected ResponseEntity<?> handleExceptionRequest(Exception ex,  HttpServletRequest request) {
+	@Override
+	protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		ErrorResponse errorResponse = new ErrorResponse(GeneralCatalog.GRAL002.getCode(), 
 				GeneralCatalog.GRAL002.getMessage(), 
 				GeneralCatalog.GRAL002.getLevelException().toString(), 
-				request.getRequestURL().toString());	
+				((ServletWebRequest)request).getRequest().getRequestURI());	
 		return ResponseEntity.status(GeneralCatalog.GRAL002.getHtttpStatus()).body(errorResponse);
 	}
 
